@@ -19,3 +19,4 @@ image:
 
 service_name: "test-service"
 region: "europe-west1"
+service_account: "deployer-test@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com"

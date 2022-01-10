@@ -25,7 +25,7 @@ spec:
       containers:
       - name: cloudrun-deployer
         image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
-        command: ["gcloud",  "run", "deploy", "{{ .Values.service_name }}", "--region={{ .Values.region }}", "--image={{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"]
+        command: ["gcloud",  "run", "deploy", "{{ .Values.service_name }}", "--service-account={{ .Values.service_account }}", "--region={{ .Values.region }}", "--image={{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"]
       restartPolicy: Never
   backoffLimit: 4
   
