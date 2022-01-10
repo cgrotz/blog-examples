@@ -1,0 +1,17 @@
+apiVersion: deploy.cloud.google.com/v1beta1
+kind: DeliveryPipeline
+metadata:
+ name: example-app
+description: main application pipeline
+serialPipeline:
+ stages:
+ - targetId: qsdev
+   profiles: []
+---
+apiVersion: deploy.cloud.google.com/v1beta1
+kind: Target
+metadata:
+ name: qsdev
+description: development cluster
+gke:
+ cluster: <replace with your cluster>

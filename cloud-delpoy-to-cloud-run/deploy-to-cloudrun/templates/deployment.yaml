@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "..fullname" . }}-{{ now | date "20060102150405" }}
+  labels:
+    {{- include "..labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      serviceAccountName: deployer-test
+      containers:
+      - name: cloudrun-deployer
+        image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+        command: ["gcloud",  "run", "deploy", "{{ .Values.service_name }}", "--region={{ .Values.region }}", "--image={{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"]
+      restartPolicy: Never
+  backoffLimit: 4
+  

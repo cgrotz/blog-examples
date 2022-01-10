@@ -1,0 +1,7 @@
+image:
+  repository: deployer
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service_name: "test-service"
+region: "europe-west1"
