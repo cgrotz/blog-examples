@@ -14,4 +14,4 @@ metadata:
  name: qsdev
 description: development cluster
 gke:
- cluster: <replace with your cluster>
+ cluster: projects/<PROJECT_ID>/locations/<REGION>/clusters/<CLUSTER_NAME>
