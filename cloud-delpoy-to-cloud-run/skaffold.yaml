@@ -30,6 +30,7 @@ deploy:
         setValues:
           region: "europe-west1"
           service_name: "test-service"
+          service_account: "deployer-test@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com"
         artifactOverrides:
           image: app
         imageStrategy:
