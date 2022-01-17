@@ -22,6 +22,7 @@ spec:
   template:
     spec:
       serviceAccountName: deployer-test
+      ttlSecondsAfterFinished: 120
       containers:
       - name: cloudrun-deployer
         image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
