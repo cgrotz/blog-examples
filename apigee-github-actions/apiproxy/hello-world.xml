@@ -1,0 +1,13 @@
+<APIProxy revision="1" name="hello-world">
+    <DisplayName></DisplayName>
+    <Description></Description>
+    <CreatedAt>1642755207215</CreatedAt>
+    <LastModifiedAt>1642755207215</LastModifiedAt>
+    <BasePaths>/hello-world</BasePaths>
+    <ProxyEndpoints>
+        <ProxyEndpoint>default</ProxyEndpoint>
+    </ProxyEndpoints>
+    <TargetEndpoints>
+        <TargetEndpoint>default</TargetEndpoint>
+    </TargetEndpoints>
+</APIProxy>
