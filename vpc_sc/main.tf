@@ -41,15 +41,13 @@ EOT
 }
 
 resource "null_resource" proxy_docker_image {
-
   provisioner "local-exec" {
     command = <<EOT
-    docker build -t gcr.io/${var.project_id}/proxy:latest ./proxy
-    docker push gcr.io/${var.project_id}/proxy:latest
+    docker build -t gcr.io/${var.project_id}/perf:latest ./proxy
+    docker push gcr.io/${var.project_id}/perf:latest
 EOT
   }
 }
-//  docker build -t gcr.io/cloud-armor-test-333010/proxy:1 ./proxy
 
 resource "google_cloud_run_service" "default" {
   name     = "cloudrun-srv"
@@ -99,7 +97,7 @@ resource "google_cloud_run_service" "proxy-default" {
   template {
     spec {
       containers {
-        image ="gcr.io/${var.project_id}/proxy:1"
+        image ="gcr.io/${var.project_id}/perf:1"
         ports {
           name = "http1"
           container_port = 80
