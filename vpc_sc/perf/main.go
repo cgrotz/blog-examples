@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -27,6 +28,12 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 var preRequestDelay = flag.Int("preRequestDelay", 0, "Delay in Milliseconds before the request is passed to the backend")
@@ -36,9 +43,33 @@ var startupDelay = flag.Int("startupDelay", 0, "Delay in Milliseconds before the
 var reverseProxyDestination = flag.String("remote", "", "Backend for the reverse proxy")
 var runAsReverseProxy = flag.Bool("proxy", false, "Should the app run in reverse proxy mode")
 var port = flag.Int("port", 8080, "Server port for the app")
+var tracing = flag.Bool("tracing", true, "Tracing enabled; defaults to true")
+var project string
 
 func main() {
 	flag.Parse()
+	if *tracing == true {
+		if err := initTracer(); err != nil {
+			log.Fatalf("Failed creating tracer %v", err)
+		}
+	}
+
+	// Get project ID from metadata server
+	project = ""
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
+	req.Header.Set("Metadata-Flavor", "Google")
+	res, err := client.Do(req)
+	if err == nil {
+		defer res.Body.Close()
+		if res.StatusCode == 200 {
+			responseBody, err := ioutil.ReadAll(res.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			project = string(responseBody)
+		}
+	}
 
 	structuredLogging(map[string]interface{}{
 		"type":  "event",
@@ -74,30 +105,101 @@ func main() {
 		}
 		handler := func(p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
 			return func(w http.ResponseWriter, r *http.Request) {
+				if *tracing {
+					tracer := otel.GetTracerProvider().Tracer("")
+					_, spanOuter := tracer.Start(r.Context(), "proxying-outer")
+					structuredLogging(map[string]interface{}{
+						"logging.googleapis.com/trace":  fmt.Sprintf("projects/%s/traces/%s", project, spanOuter.SpanContext().TraceID().String()),
+						"logging.googleapis.com/spanId": spanOuter.SpanContext().SpanID().String(),
+						"time":                          time.Now().UnixNano() / int64(time.Millisecond),
+						"event":                         "proxy-start",
+					})
+					defer spanOuter.End()
+				} else {
+					structuredLogging(map[string]interface{}{
+						"time":  time.Now().UnixNano() / int64(time.Millisecond),
+						"event": "proxy-start",
+					})
+				}
+
 				time.Sleep(time.Duration(*preRequestDelay * int(time.Millisecond)))
 				r.Host = remote.Host
-				p.ServeHTTP(w, r)
+				if *tracing {
+					tracer := otel.GetTracerProvider().Tracer("")
+					_, spanInner := tracer.Start(r.Context(), "proxying-inner")
+					start := time.Now()
+					structuredLogging(map[string]interface{}{
+						"logging.googleapis.com/trace":  fmt.Sprintf("projects/%s/traces/%s", project, spanInner.SpanContext().TraceID().String()),
+						"logging.googleapis.com/spanId": spanInner.SpanContext().SpanID().String(),
+						"time":                          start.UnixNano() / int64(time.Millisecond),
+						"event":                         "proxy-send",
+					})
+					p.ServeHTTP(w, r)
+					structuredLogging(map[string]interface{}{
+						"logging.googleapis.com/trace":  fmt.Sprintf("projects/%s/traces/%s", project, spanInner.SpanContext().TraceID().String()),
+						"logging.googleapis.com/spanId": spanInner.SpanContext().SpanID().String(),
+						"proxy_time":                    time.Since(start).Seconds(),
+					})
+					spanInner.End()
+				} else {
+					start := time.Now()
+					p.ServeHTTP(w, r)
+					structuredLogging(map[string]interface{}{
+						"proxy_time": time.Since(start).Seconds(),
+					})
+				}
 				time.Sleep(time.Duration(*postRequestDelay * int(time.Millisecond)))
 			}
 		}
-		http.HandleFunc("/", handler(httputil.NewSingleHostReverseProxy(remote)))
+		if *tracing {
+			otelHandler := otelhttp.NewHandler(http.HandlerFunc(handler(httputil.NewSingleHostReverseProxy(remote))), "proxy")
+			http.Handle("/", otelHandler)
+		} else {
+			http.HandleFunc("/", handler(httputil.NewSingleHostReverseProxy(remote)))
+		}
 	} else {
-		http.HandleFunc("/", LoopBack)
+		if *tracing {
+			http.Handle("/", otelhttp.NewHandler(http.HandlerFunc(LoopBack), "loopback"))
+		} else {
+			http.HandleFunc("/", http.HandlerFunc(LoopBack))
+		}
 	}
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", GetIntValueFromEnv("PORT", *port)), nil))
 }
-
 func LoopBack(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(time.Duration(*processingTime * int(time.Millisecond)))
+	if *tracing {
+		tracer := otel.GetTracerProvider().Tracer("")
+		_, spanInner := tracer.Start(r.Context(), "loopback-outer")
+		structuredLogging(map[string]interface{}{
+			"logging.googleapis.com/trace":  fmt.Sprintf("projects/%s/traces/%s", project, spanInner.SpanContext().TraceID().String()),
+			"logging.googleapis.com/spanId": spanInner.SpanContext().SpanID().String(),
+			"time":                          time.Now().UnixNano() / int64(time.Millisecond),
+			"event":                         "loopback",
+		})
+		defer spanInner.End()
+		time.Sleep(time.Duration(*processingTime * int(time.Millisecond)))
 
-	dump, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-		return
+		_, spanOuter := tracer.Start(r.Context(), "loopback-inner")
+		defer spanOuter.End()
+		dump, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "%q", dump)
+	} else {
+		time.Sleep(time.Duration(*processingTime * int(time.Millisecond)))
+
+		dump, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "%q", dump)
 	}
-
-	fmt.Fprintf(w, "%q", dump)
 }
 
 func GetIntValueFromEnv(env string, defaultValue int) int {
@@ -148,4 +250,19 @@ func GetBoolValue(env string, defaultValue bool) bool {
 func structuredLogging(values map[string]interface{}) {
 	content, _ := json.Marshal(values)
 	fmt.Printf("%s\n", string(content))
+}
+
+func initTracer() error {
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	exporter, err := texporter.New(texporter.WithProjectID(projectID))
+	if err != nil {
+		return fmt.Errorf("unable to create tracer %v", err)
+	}
+
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.AlwaysSample())),
+		sdktrace.WithBatcher(exporter))
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+	return nil
 }
