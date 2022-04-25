@@ -48,6 +48,8 @@ var project string
 
 func main() {
 	flag.Parse()
+	tracing_temp := GetBoolValue("TRACING", *tracing)
+	tracing = &tracing_temp
 	if *tracing == true {
 		if err := initTracer(); err != nil {
 			log.Fatalf("Failed creating tracer %v", err)
@@ -56,18 +58,20 @@ func main() {
 
 	// Get project ID from metadata server
 	project = ""
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
-	req.Header.Set("Metadata-Flavor", "Google")
-	res, err := client.Do(req)
-	if err == nil {
-		defer res.Body.Close()
-		if res.StatusCode == 200 {
-			responseBody, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				log.Fatal(err)
+	if *tracing {
+		client := &http.Client{}
+		req, _ := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/project/project-id", nil)
+		req.Header.Set("Metadata-Flavor", "Google")
+		res, err := client.Do(req)
+		if err == nil {
+			defer res.Body.Close()
+			if res.StatusCode == 200 {
+				responseBody, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					log.Fatal(err)
+				}
+				project = string(responseBody)
 			}
-			project = string(responseBody)
 		}
 	}
 
