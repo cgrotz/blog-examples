@@ -39,7 +39,7 @@ resource "google_api_gateway_api_config" "api_cfg" {
   project  = var.project_id
   api      = google_api_gateway_api.api.api_id
 
-  api_config_id = "helloworld-api-cfg"
+  api_config_id = "helloworld-api-cfg-4"
 
   openapi_documents {
     document {
@@ -47,9 +47,11 @@ resource "google_api_gateway_api_config" "api_cfg" {
       contents = textencodebase64(templatefile("api-spec.yaml", {
         "BACKEND_SERVICE_NAME" = google_cloud_run_service.spring-app.status[0].url
         "OAUTH_AUTHORIZATION_URL" = var.oauth_authorization_url
+        "OAUTH_ISSUER" = var.oauth_client_issuer
         "OAUTH_CLIENT_ID" = var.oauth_client_id
         "OAUTH_CLIENT_SECRET" = var.oauth_client_secret
         "OAUTH_AUDIENCE" = var.oauth_audience
+        "OAUTH_CLIENT_JWKS" = var.oauth_client_jwks
       }), "utf-8")
     }
   }

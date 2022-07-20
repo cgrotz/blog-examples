@@ -14,18 +14,12 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerAuthenticationManagerResolver;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfiguration {
 
   private static final Logger logger = LoggerFactory.getLogger(SecurityConfiguration.class);
-
-  @Bean
-  public BearerTokenResolver bearerTokenResolver() {
-    return new GoogleCloudBearerTokenResolver();
-  }
 
   @Value("${OIDC_ISSUER}")
   public String issuerUri;
@@ -35,13 +29,11 @@ public class SecurityConfiguration {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    JwtDecoder decoder1 = createJwtDecoder(issuerUri, jwksUrl);
-    JwtDecoder decoder2 = createJwtDecoder("https://cloud.google.com/iap",
-        "https://www.gstatic.com/iap/verify/public_key-jwk");
-    JwtAuthenticationProvider provider1 = new JwtAuthenticationProvider(decoder1);
-    provider1.setJwtAuthenticationConverter(new CustomJwtAuthenticationConverter());
-    JwtAuthenticationProvider provider2 = new JwtAuthenticationProvider(decoder2);
-    provider2.setJwtAuthenticationConverter(new CustomJwtAuthenticationConverter());
+    JwtAuthenticationProvider provider1 = createJwtAuthenticationProvider(issuerUri, jwksUrl);
+
+    JwtAuthenticationProvider provider2 = createJwtAuthenticationProvider(
+        "https://cloud.google.com/iap", "https://www.gstatic.com/iap/verify/public_key-jwk");
+
     JwtIssuerAuthenticationManagerResolver authenticationManagerResolver =
         new JwtIssuerAuthenticationManagerResolver(context -> {
           if (context.startsWith(issuerUri)) {
@@ -59,8 +51,16 @@ public class SecurityConfiguration {
         )
         .oauth2ResourceServer(oauth2 -> oauth2
             .authenticationManagerResolver(authenticationManagerResolver)
+            .bearerTokenResolver(new GoogleCloudBearerTokenResolver())
         );
     return http.build();
+  }
+
+  private JwtAuthenticationProvider createJwtAuthenticationProvider(String issuer, String jwkSetUri) {
+    JwtDecoder decoder2 = createJwtDecoder(issuer, jwkSetUri);
+    JwtAuthenticationProvider provider2 = new JwtAuthenticationProvider(decoder2);
+    provider2.setJwtAuthenticationConverter(new CustomJwtAuthenticationConverter());
+    return provider2;
   }
 
   private JwtDecoder createJwtDecoder(String issuer, String jwkSetUri) {

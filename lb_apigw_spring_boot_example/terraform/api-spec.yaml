@@ -24,10 +24,19 @@ produces:
 x-google-backend:
   address: ${BACKEND_SERVICE_NAME}
 paths:
-  /hello:
+  /:
     get:
       summary: Responds with the request
       operationId: get_hello_world
+      responses:
+        '200':
+          description: A successful response
+          schema:
+            type: string
+  /remote:
+    get:
+      summary: Calls a remote service (GET /anything of a HTTPBin instance)
+      operationId: get_remote_hello_world
       responses:
         '200':
           description: A successful response
@@ -40,6 +49,6 @@ securityDefinitions:
     authorizationUrl: "${OAUTH_AUTHORIZATION_URL}"
     flow: "implicit"
     type: "oauth2"
-    x-google-issuer: "${OAUTH_CLIENT_ID}"
-    x-google-jwks_uri: "${OAUTH_CLIENT_SECRET}"
+    x-google-issuer: "${OAUTH_ISSUER}"
+    x-google-jwks_uri: "${OAUTH_CLIENT_JWKS}"
     x-google-audiences: "${OAUTH_AUDIENCE}"
