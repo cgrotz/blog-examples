@@ -1,7 +1,5 @@
 # Example for using IAP and API Gateway with Cloud Run services
 
-![The architecture consisting of the various elements to be deployed](docs/architecture.png "The deployed architecture")
-
 ## Setup steps:
 * Enable Identity Platform in your GCP project https://console.cloud.google.com/customer-identity/onboarding
 * Create a Service Account that has sufficient permissions to deploy the required resources (some of the resources can only be configured/deployed using a service account)
