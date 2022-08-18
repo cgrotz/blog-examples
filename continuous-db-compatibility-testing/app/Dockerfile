@@ -12,5 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM nginx:latest
-COPY ./nginx.conf.template /etc/nginx/templates/default.conf.template 
+FROM golang:1.19-buster as build
+
+WORKDIR /go/src/app
+ADD ./ /go/src/app
+
+RUN go build -tags docker -o /go/bin/app *.go
+
+FROM gcr.io/distroless/base-debian11
+COPY --from=build /go/bin/app /
+CMD ["/app"] 

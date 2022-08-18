@@ -1,0 +1,157 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    dir: app
+    args:
+      - build
+      - '-t'
+      - '$_APP_IMAGE_NAME:$BUILD_ID'
+      - .
+      - '-f'
+      - Dockerfile
+    id: Build App
+  - name: gcr.io/cloud-builders/docker
+    dir: database
+    args:
+      - build
+      - '-t'
+      - '$_MIGRATION_IMAGE_NAME:$BUILD_ID'
+      - .
+      - '-f'
+      - Dockerfile
+    id: Build Migrations
+  - name: gcr.io/cloud-builders/docker
+    dir: testsuite
+    args:
+      - build
+      - '-t'
+      - '$_TESTSUITE_IMAGE_NAME:$BUILD_ID'
+      - .
+      - '-f'
+      - Dockerfile
+    id: Build Testsuite
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_APP_IMAGE_NAME:$BUILD_ID'
+    id: Push App Image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_MIGRATION_IMAGE_NAME:$BUILD_ID'
+    id: Push Migration Image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_TESTSUITE_IMAGE_NAME:$BUILD_ID'
+    id: Push Testsuite Image
+  - name: 'postgres'
+    id: Drop Database Clone
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        psql -c "DROP DATABASE IF EXISTS dbclone;" $$_CONNECTION_URL
+    secretEnv: ['_CONNECTION_URL']
+  - name: 'postgres'
+    id: Clone Prod Database
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        psql -c "CREATE DATABASE dbclone WITH TEMPLATE test OWNER postgres;" $$_CONNECTION_URL
+    secretEnv: ['_CONNECTION_URL']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: Deploy Test Service
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "Fetch Production Image"
+        gcloud run services describe $_PROD_SERVICE_NAME --region=$_DEPLOY_REGION --format="get(spec.template.spec.containers[0].image)" > /workspace/prod_version.txt
+        gcloud run deploy $_TEST_SERVICE_NAME --region=$_DEPLOY_REGION --allow-unauthenticated --vpc-connector=vpc-con --update-secrets=DB_URL=<TEST_DB_URL_SECRET_NAME>:<VERSION> --image=$(gcloud run services describe $_PROD_SERVICE_NAME --region=$_DEPLOY_REGION --format="get(spec.template.spec.containers[0].image)")
+        gcloud run services describe $_TEST_SERVICE_NAME --region=$_DEPLOY_REGION --format='get(status.address.url)' > /workspace/test_url.txt
+    secretEnv: ['_DATABASE_URL']
+  - name: '$_MIGRATION_IMAGE_NAME:$BUILD_ID'
+    id: Migrate Database
+    args:
+      - -path=/migrations/ 
+      - -database=$$_DATABASE_URL
+      - up
+    secretEnv: ['_DATABASE_URL']
+  - name: '$_TESTSUITE_IMAGE_NAME:current'
+    id: Run Tests
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        export HOST=$(cat /workspace/test_url.txt) 
+        npm run tests 
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - tag
+      - '$_TESTSUITE_IMAGE_NAME:$BUILD_ID'
+      - '$_TESTSUITE_IMAGE_NAME:current'
+    id: Tag Testsuite Image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_TESTSUITE_IMAGE_NAME:current'
+    id: Push Testsuite Image Current
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - run
+      - services
+      - update
+      - $_PROD_SERVICE_NAME
+      - '--platform=managed'
+      - '--image=$_APP_IMAGE_NAME:$BUILD_ID'
+      - '--set-env-vars="DB_URL=$$_DATABASE_URL"'
+      - >-
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID
+      - '--region=$_DEPLOY_REGION'
+      - '--quiet'
+    id: Deploy
+    entrypoint: gcloud
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: Delete Database clone
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud sql instances delete test-clone
+images:
+  - '$_APP_IMAGE_NAME:$BUILD_ID'
+  - '$_MIGRATION_IMAGE_NAME:$BUILD_ID'
+  - '$_TESTSUITE_IMAGE_NAME:$BUILD_ID'
+options:
+  substitutionOption: ALLOW_LOOSE
+options:
+  logging: "CLOUD_LOGGING_ONLY"
+substitutions:
+  _SERVICE_NAME: demoapp
+  _DEPLOY_REGION: europe-west1
+  _GCR_HOSTNAME: eu.gcr.io
+  _PROD_SERVICE_NAME: prod-service
+  _TEST_SERVICE_NAME: test-service
+  _PROD_DATABASE_NAME: test
+timeout: 900s
+availableSecrets:
+  secretManager:
+  - versionName: projects/<PROJECT_ID>/secrets/<TEST_DB_URL_SECRET_NAME>/versions/<TEST_DB_URL_SECRET_VERSION>
+    env: '_DATABASE_URL'
+  - versionName: projects/<PROJECT_ID>/secrets/<PROD_DB_URL_SECRET_NAME>/versions/<PROD_DB_URL_SECRET_VERSION>
+    env: '_CONNECTION_URL'

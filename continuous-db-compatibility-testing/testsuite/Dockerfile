@@ -12,5 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM nginx:latest
-COPY ./nginx.conf.template /etc/nginx/templates/default.conf.template 
+FROM node:18-buster
+
+COPY ["package.json", "package-lock.json*", "./"]
+RUN npm install
+
+COPY . .
+
+ENTRYPOINT [ "/bin/bash" ]
