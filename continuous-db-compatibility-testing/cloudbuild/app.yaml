@@ -126,13 +126,6 @@ steps:
       - '--quiet'
     id: Deploy
     entrypoint: gcloud
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    id: Delete Database clone
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        gcloud sql instances delete test-clone
 images:
   - '$_APP_IMAGE_NAME:$BUILD_ID'
   - '$_MIGRATION_IMAGE_NAME:$BUILD_ID'
