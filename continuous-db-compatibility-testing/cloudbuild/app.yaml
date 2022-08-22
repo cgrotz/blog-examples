@@ -82,7 +82,7 @@ steps:
       - |
         echo "Fetch Production Image"
         gcloud run services describe $_PROD_SERVICE_NAME --region=$_DEPLOY_REGION --format="get(spec.template.spec.containers[0].image)" > /workspace/prod_version.txt
-        gcloud run deploy $_TEST_SERVICE_NAME --region=$_DEPLOY_REGION --allow-unauthenticated --vpc-connector=vpc-con --update-secrets=DB_URL=<TEST_DB_URL_SECRET_NAME>:<VERSION> --image=$(gcloud run services describe $_PROD_SERVICE_NAME --region=$_DEPLOY_REGION --format="get(spec.template.spec.containers[0].image)")
+        gcloud run deploy $_TEST_SERVICE_NAME --region=$_DEPLOY_REGION --allow-unauthenticated --vpc-connector=vpc-con --update-secrets=DB_URL=<TEST_DB_URL_SECRET_NAME>:<TEST_DB_URL_SECRET_VERSION> --image=$(gcloud run services describe $_PROD_SERVICE_NAME --region=$_DEPLOY_REGION --format="get(spec.template.spec.containers[0].image)")
         gcloud run services describe $_TEST_SERVICE_NAME --region=$_DEPLOY_REGION --format='get(status.address.url)' > /workspace/test_url.txt
     secretEnv: ['_DATABASE_URL']
   - name: '$_MIGRATION_IMAGE_NAME:$BUILD_ID'
@@ -119,7 +119,7 @@ steps:
       - $_PROD_SERVICE_NAME
       - '--platform=managed'
       - '--image=$_APP_IMAGE_NAME:$BUILD_ID'
-      - '--set-env-vars="DB_URL=$$_DATABASE_URL"'
+      - '--update-secrets=DB_URL=<PROD_DB_URL_SECRET_NAME>:<PROD_DB_URL_SECRET_VERSION>'
       - >-
         --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID
       - '--region=$_DEPLOY_REGION'
