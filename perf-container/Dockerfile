@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.16-buster as build
+FROM golang:1.18-buster as build
 
 WORKDIR /go/src/app
 ADD ./ /go/src/app
