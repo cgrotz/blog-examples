@@ -54,7 +54,7 @@ static_resources:
                         if( request_handle:headers():get("Authorization") == nil or request_handle:headers():get("Authorization") == '') then
                           request_handle:logInfo("No Authorization header set")
                         else
-                          request_handle:logInfo("Switchting Authorization header")
+                          request_handle:logInfo("Switching Authorization header")
                           request_handle:headers():add("X-Forwarded-Authorization", request_handle:headers():get("Authorization"))
                           request_handle:headers():remove("Authorization")
                         end
