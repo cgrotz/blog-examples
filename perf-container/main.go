@@ -44,6 +44,7 @@ var reverseProxyDestination = flag.String("remote", "", "Backend for the reverse
 var runAsReverseProxy = flag.Bool("proxy", false, "Should the app run in reverse proxy mode")
 var port = flag.Int("port", 8080, "Server port for the app")
 var tracing = flag.Bool("tracing", true, "Tracing enabled; defaults to true")
+var explicitError = flag.Bool("error", false, "Explicitly throw an error before starting the HTTP server; defaults to false")
 var project string
 
 func main() {
@@ -77,7 +78,7 @@ func main() {
 
 	structuredLogging(map[string]interface{}{
 		"type":  "event",
-		"event": "STARTED",
+		"event": "STARTING",
 	})
 
 	done := make(chan struct{})
@@ -90,11 +91,13 @@ func main() {
 			"event": "STOPPING",
 		})
 		close(done)
+		os.Exit(0)
 	}()
 
 	preRequestDelay = GetIntValueFromEnvOrUseFlag("PRE_REQUEST_DELAY", *preRequestDelay)
 	postRequestDelay = GetIntValueFromEnvOrUseFlag("POST_REQUEST_DELAY", *postRequestDelay)
 	processingTime = GetIntValueFromEnvOrUseFlag("PROCESSING_TIME", *processingTime)
+	explicitError = GetBoolValueFromEnvOrUseFlag("EXPLICIT_ERROR", *explicitError)
 
 	time.Sleep(time.Duration(GetIntValueFromEnv("STARTUP_DELAY", *startupDelay) * int(time.Millisecond)))
 
@@ -168,7 +171,13 @@ func main() {
 			http.HandleFunc("/", http.HandlerFunc(LoopBack))
 		}
 	}
-
+	if *explicitError {
+		log.Fatal("Intentionally Stop")
+	}
+	structuredLogging(map[string]interface{}{
+		"time":  time.Now().UnixNano() / int64(time.Millisecond),
+		"event": "HTTP_READY",
+	})
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", GetIntValueFromEnv("PORT", *port)), nil))
 }
 func LoopBack(w http.ResponseWriter, r *http.Request) {
@@ -248,6 +257,18 @@ func GetBoolValue(env string, defaultValue bool) bool {
 		}
 	} else {
 		return defaultValue
+	}
+}
+
+func GetBoolValueFromEnvOrUseFlag(env string, defaultValue bool) *bool {
+	if os.Getenv(env) != "" {
+		value, err := strconv.ParseBool(os.Getenv(env))
+		if err != nil {
+			log.Panicf("Can't parse value of %s env variable %s %v", env, os.Getenv(env), err)
+		}
+		return &value
+	} else {
+		return &defaultValue
 	}
 }
 
