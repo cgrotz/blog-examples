@@ -16,7 +16,7 @@ jobs:
     - id: 'auth'
       uses: 'google-github-actions/auth@v0'
       with:
-        workload_identity_provider: 'projects/serverless-container-images/locations/global/workloadIdentityPools/github/providers/github'
+        workload_identity_provider: 'projects/753105118496/locations/global/workloadIdentityPools/github/providers/github'
         service_account: 'github@serverless-container-images.iam.gserviceaccount.com'
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v0'
