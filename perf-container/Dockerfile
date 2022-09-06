@@ -17,7 +17,7 @@ FROM golang:1.18-buster as build
 WORKDIR /go/src/app
 ADD ./ /go/src/app
 
-RUN go build -tags docker -o /go/bin/app *.go
+RUN CGO_ENABLED=0 go build -tags docker -o /go/bin/app *.go
 
 FROM gcr.io/distroless/base-debian11
 COPY --from=build /go/bin/app /
