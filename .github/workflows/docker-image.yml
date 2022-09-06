@@ -3,7 +3,7 @@ name: Docker Image CI
 on:
   push:
     paths:
-      - './perf-container/**'
+      - './perf-container/*'
       - '.github/workflows/docker-image.yml'
     branches: [ "main" ]
 
