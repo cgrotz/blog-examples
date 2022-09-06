@@ -23,6 +23,7 @@ jobs:
     - name: 'Use gcloud CLI'
       run: 'gcloud auth configure-docker --quiet'
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag gcr.io/serverless-container-images/perf:$(date +%s)
+      working-directory: ./perf-container
+      run: docker build . --tag gcr.io/serverless-container-images/perf:$(date +%s)
     - name: Push the Docker image
       run: docker push gcr.io/serverless-container-images/perf:$(date +%s)
