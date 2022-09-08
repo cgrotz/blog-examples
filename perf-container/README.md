@@ -27,6 +27,7 @@ gcloud run deploy backend --quiet \
     --region=europe-west1 \
     --project=ipam-autopilot-showcase \
     --image="gcr.io/<project_id>/perf:1" \
+    --args=/app \
     --args=--processingTime=100
 ```
 
@@ -38,6 +39,7 @@ gcloud run deploy frontend --quiet \
     --region=europe-west1 \
     --project=ipam-autopilot-showcase \
     --image="gcr.io/<project_id>/perf:1" \
+    --args=/app \
     --args=--proxy=true \
     --args=--remote=https://<proxied_service>.a.run.app
 ```
