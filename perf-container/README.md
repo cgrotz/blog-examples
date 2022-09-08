@@ -26,7 +26,6 @@ Example deployment to Cloud Run in backend mode:
 gcloud run deploy backend --quiet \
     --allow-unauthenticated \
     --image="gcr.io/<project_id>/perf:1" \
-    --args=/app \
     --args=--processingTime=100
 ```
 
@@ -35,7 +34,6 @@ Example deployment to Cloud Run in proxy mode:
 gcloud run deploy frontend --quiet \
     --allow-unauthenticated \
     --image="gcr.io/<project_id>/perf:1" \
-    --args=/app \
     --args=--proxy=true \
     --args=--remote=https://<proxied_service>.a.run.app
 ```

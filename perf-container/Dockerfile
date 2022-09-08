@@ -21,4 +21,4 @@ RUN CGO_ENABLED=0 go build -tags docker -o /go/bin/app *.go
 
 FROM gcr.io/distroless/base-debian11
 COPY --from=build /go/bin/app /
-CMD ["/app"] 
+ENTRYPOINT ["/app"] 
