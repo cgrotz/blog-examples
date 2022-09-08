@@ -106,22 +106,19 @@ func main() {
 		if destination == "" {
 			log.Panicln("In proxy mode destination needs to be set")
 		}
+		remote, err := url.Parse(destination)
+		if err != nil {
+			log.Panicf("destination is not a parsable URL %v", err)
+		}
 		handler := func(p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
 			return func(w http.ResponseWriter, r *http.Request) {
-				localPreRequestDelay,err := GetQueryOrDefault(r, "pre_request_delay", *preRequestDelay)
+				localPreRequestDelay, err := GetQueryOrDefault(r, "pre_request_delay", *preRequestDelay)
 				if err != nil {
 					fmt.Fprintf(w, "%v", err)
 					return
 				}
-				localPostRequestDelay,err := GetQueryOrDefault(r, "post_request_delay", *postRequestDelay)
+				localPostRequestDelay, err := GetQueryOrDefault(r, "post_request_delay", *postRequestDelay)
 				if err != nil {
-					fmt.Fprintf(w, "%v", err)
-					return
-				}
-				localDestination := GetQueryOrDefaultString(r, "remote", destination)
-				remote, err := url.Parse(localDestination)
-				if err != nil {
-					log.Fprintf(w, "destination is not a parsable URL", err)
 					fmt.Fprintf(w, "%v", err)
 					return
 				}
@@ -143,7 +140,7 @@ func main() {
 					})
 				}
 
-				time.Sleep(time.Duration(localPostRequestDelay * int(time.Millisecond)))
+				time.Sleep(time.Duration(localPreRequestDelay * int(time.Millisecond)))
 				r.Host = remote.Host
 				if *tracing {
 					tracer := otel.GetTracerProvider().Tracer("")
@@ -196,7 +193,7 @@ func main() {
 }
 
 func LoopBack(w http.ResponseWriter, r *http.Request) {
-	localProcessingTime,err := GetQueryOrDefault(r, "processing_time", *processingTime)
+	localProcessingTime, err := GetQueryOrDefault(r, "processing_time", *processingTime)
 	if err != nil {
 		fmt.Fprintf(w, "%v", w)
 		return
@@ -292,7 +289,7 @@ func GetBoolValueFromEnvOrUseFlag(env string, defaultValue bool) *bool {
 	}
 }
 
-func GetQueryOrDefault(r *http.Request, string queryParameterName, int defaultValue) (int, error) {
+func GetQueryOrDefault(r *http.Request, queryParameterName string, defaultValue int) (int, error) {
 	queryParameter := r.URL.Query().Get(queryParameterName)
 	if queryParameter == "" {
 		return defaultValue, nil
@@ -305,7 +302,7 @@ func GetQueryOrDefault(r *http.Request, string queryParameterName, int defaultVa
 	}
 }
 
-func GetQueryOrDefaultString(r *http.Request, string queryParameterName, string defaultValue) string {
+func GetQueryOrDefaultString(r *http.Request, queryParameterName string, defaultValue string) string {
 	queryParameter := r.URL.Query().Get(queryParameterName)
 	if queryParameter == "" {
 		return defaultValue

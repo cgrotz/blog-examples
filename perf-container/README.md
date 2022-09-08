@@ -13,7 +13,7 @@ You can configure various behaviors of the container to analyze the performance 
 | postRequestDelay | POST_REQUEST_DELAY        | post_request_delay | proxy   | 0       | Delay in Milliseconds after the request is passed to the backend                   | sa@<project>.landisgyr.com |
 | processingTime   | PROCESSING_TIME           | processing_time    | backend | 0       | Time in Milliseconds before for fake processing before the request is responded to |                            |
 | startupDelay     | STARTUP_DELAY             | N/A                | both    | 0       | Delay in Milliseconds before the container starts up                               |                            |
-| remote           | REVERSE_PROXY_DESTINATION | remote             | proxy   |         | Backend for the reverse proxy                                                      |                            |
+| remote           | REVERSE_PROXY_DESTINATION | N/A                | proxy   |         | Backend for the reverse proxy                                                      |                            |
 | proxy            | RUN_AS_REVERSE_PROXY      | N/A                | proxy   | false   | Should the app run in reverse proxy mode                                           |                            |
 | error            | EXPLICIT_ERROR            | N/A                | N/A     | false   | Explicitly throw an error before starting the HTTP server; defaults to false       |                            |
 | port             | PORT                      | N/A                | N/A     | 8080    | Server port for the app                                                            |                            |
