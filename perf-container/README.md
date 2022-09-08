@@ -10,7 +10,7 @@ You can configure various behaviors of the container to analyze the performance 
 | Variable         | Env                       | Mode    | Default | Description                                                                        | Example Value              |
 |------------------|---------------------------|---------|---------|------------------------------------------------------------------------------------|----------------------------|
 | preRequestDelay  | PRE_REQUEST_DELAY         | proxy   | 0       | Delay in Milliseconds before the request is passed to the backend                  | dev, qa, prod              |
-| postRequestDelay | POST_REQUEST_DELAY        | proxy   | 0       | Delay in Milliseconds after the request is passed to the backend                   | sa@<project>.landisgyr.com |
+| postRequestDelay | POST_REQUEST_DELAY        | proxy   | 0       | Delay in Milliseconds after the request is passed to the backend                   | sa@<project>.com |
 | processingTime   | PROCESSING_TIME           | backend | 0       | Time in Milliseconds before for fake processing before the request is responded to |                            |
 | startupDelay     | STARTUP_DELAY             | both    | 0       | Delay in Milliseconds before the container starts up                               |                            |
 | remote           | REVERSE_PROXY_DESTINATION | proxy   |         | Backend for the reverse proxy                                                      |                            |
