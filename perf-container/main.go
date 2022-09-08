@@ -108,10 +108,21 @@ func main() {
 		}
 		remote, err := url.Parse(destination)
 		if err != nil {
-			log.Panicln("destination is not a parsable URL", err)
+			log.Panicf("destination is not a parsable URL %v", err)
 		}
 		handler := func(p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
 			return func(w http.ResponseWriter, r *http.Request) {
+				localPreRequestDelay, err := GetQueryOrDefault(r, "pre_request_delay", *preRequestDelay)
+				if err != nil {
+					fmt.Fprintf(w, "%v", err)
+					return
+				}
+				localPostRequestDelay, err := GetQueryOrDefault(r, "post_request_delay", *postRequestDelay)
+				if err != nil {
+					fmt.Fprintf(w, "%v", err)
+					return
+				}
+
 				if *tracing {
 					tracer := otel.GetTracerProvider().Tracer("")
 					_, spanOuter := tracer.Start(r.Context(), "proxying-outer")
@@ -129,7 +140,7 @@ func main() {
 					})
 				}
 
-				time.Sleep(time.Duration(*preRequestDelay * int(time.Millisecond)))
+				time.Sleep(time.Duration(localPreRequestDelay * int(time.Millisecond)))
 				r.Host = remote.Host
 				if *tracing {
 					tracer := otel.GetTracerProvider().Tracer("")
@@ -155,7 +166,7 @@ func main() {
 						"proxy_time": time.Since(start).Seconds(),
 					})
 				}
-				time.Sleep(time.Duration(*postRequestDelay * int(time.Millisecond)))
+				time.Sleep(time.Duration(localPostRequestDelay * int(time.Millisecond)))
 			}
 		}
 		if *tracing {
@@ -180,7 +191,13 @@ func main() {
 	})
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", GetIntValueFromEnv("PORT", *port)), nil))
 }
+
 func LoopBack(w http.ResponseWriter, r *http.Request) {
+	localProcessingTime, err := GetQueryOrDefault(r, "processing_time", *processingTime)
+	if err != nil {
+		fmt.Fprintf(w, "%v", w)
+		return
+	}
 	if *tracing {
 		tracer := otel.GetTracerProvider().Tracer("")
 		_, spanInner := tracer.Start(r.Context(), "loopback-outer")
@@ -191,7 +208,7 @@ func LoopBack(w http.ResponseWriter, r *http.Request) {
 			"event":                         "loopback",
 		})
 		defer spanInner.End()
-		time.Sleep(time.Duration(*processingTime * int(time.Millisecond)))
+		time.Sleep(time.Duration(localProcessingTime * int(time.Millisecond)))
 
 		_, spanOuter := tracer.Start(r.Context(), "loopback-inner")
 		defer spanOuter.End()
@@ -203,7 +220,7 @@ func LoopBack(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, "%q", dump)
 	} else {
-		time.Sleep(time.Duration(*processingTime * int(time.Millisecond)))
+		time.Sleep(time.Duration(localProcessingTime * int(time.Millisecond)))
 
 		dump, err := httputil.DumpRequest(r, true)
 		if err != nil {
@@ -269,6 +286,28 @@ func GetBoolValueFromEnvOrUseFlag(env string, defaultValue bool) *bool {
 		return &value
 	} else {
 		return &defaultValue
+	}
+}
+
+func GetQueryOrDefault(r *http.Request, queryParameterName string, defaultValue int) (int, error) {
+	queryParameter := r.URL.Query().Get(queryParameterName)
+	if queryParameter == "" {
+		return defaultValue, nil
+	} else {
+		value, err := strconv.ParseInt(queryParameter, 10, 64)
+		if err != nil {
+			return -1, err
+		}
+		return int(value), nil
+	}
+}
+
+func GetQueryOrDefaultString(r *http.Request, queryParameterName string, defaultValue string) string {
+	queryParameter := r.URL.Query().Get(queryParameterName)
+	if queryParameter == "" {
+		return defaultValue
+	} else {
+		return queryParameter
 	}
 }
 
