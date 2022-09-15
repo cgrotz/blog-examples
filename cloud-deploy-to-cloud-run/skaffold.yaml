@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: skaffold/v2beta21
+apiVersion: skaffold/v3alpha1
 kind: Config
 metadata:
   name: test
@@ -22,16 +22,10 @@ build:
     context: ./app/
     buildpacks:
       builder: gcr.io/buildpacks/builder:v1
+profiles:
+- name: dev
+  manifests:
+    rawYaml:
+    - run-dev.yaml
 deploy:
-  helm:
-    releases:
-      - name: cloudrun-deployer
-        chartPath: deploy-to-cloudrun
-        setValues:
-          region: "europe-west1"
-          service_name: "test-service"
-          service_account: "deployer-test@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com"
-        artifactOverrides:
-          image: app
-        imageStrategy:
-          helm: {}
+  cloudrun: {}
