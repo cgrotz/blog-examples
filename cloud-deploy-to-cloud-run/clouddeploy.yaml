@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: deploy.cloud.google.com/v1beta1
+apiVersion: deploy.cloud.google.com/v1
 kind: DeliveryPipeline
 metadata:
  name: example-app
@@ -20,12 +20,18 @@ description: main application pipeline
 serialPipeline:
  stages:
  - targetId: qsdev
-   profiles: []
+   profiles: [dev]
 ---
-apiVersion: deploy.cloud.google.com/v1beta1
+apiVersion: deploy.cloud.google.com/v1
 kind: Target
 metadata:
  name: qsdev
 description: development deployment
 run:
  location: projects/<PROJECT_ID>/locations/<REGION>
+executionConfigs:
+- defaultPool:
+    serviceAccount: <DEPLOYER_SA_EMAIL>
+  usages:
+  - RENDER
+  - DEPLOY

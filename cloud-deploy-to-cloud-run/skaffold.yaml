@@ -28,4 +28,5 @@ profiles:
     rawYaml:
     - run-dev.yaml
 deploy:
-  cloudrun: {}
+  cloudrun:
+    region: notused

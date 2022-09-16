@@ -19,5 +19,6 @@ metadata:
 spec:
   template:
     spec:
+      serviceAccountName: <service_account>
       containers:
       - image: app
