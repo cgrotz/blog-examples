@@ -1,0 +1,138 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: app
+  namespace: dev
+  labels:
+    env: dev
+spec:
+  gatewayClassName: gke-l7-rilb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: app
+  namespace: prod
+  labels:
+    env: prod
+spec:
+  gatewayClassName: gke-l7-rilb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: success-rate
+  namespace: prod
+spec:
+  provider:
+    type: prometheus
+    address: http://frontend.prod.svc:9090
+  query: |
+    1 - (sum(
+        rate(
+            promhttp_metric_handler_requests_total{
+              namespace="{{ namespace }}",
+              pod=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)",
+              code!="200"
+            }[{{ interval }}]
+        )
+    )
+    /
+    sum(
+        rate(
+            promhttp_metric_handler_requests_total{
+              namespace="{{ namespace }}",
+              pod=~"{{ target }}-[0-9a-zA-Z]+(-[0-9a-zA-Z]+)"
+            }[{{ interval }}]
+        )
+    ))
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: app
+  namespace: prod
+spec:
+  # deployment reference
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app-prod
+  # the maximum time in seconds for the canary deployment
+  # to make progress before it is rollback (default 600s)
+  progressDeadlineSeconds: 60
+  service:
+    # service port number
+    port: 8080
+    # container port number or name (optional)
+    targetPort: 8080
+    # Gateway API HTTPRoute host names
+    hosts:
+     - app.prod.grotz.dev
+    # Reference to the Gateway that the generated HTTPRoute would attach to.
+    gatewayRefs:
+      - name: app
+        namespace: prod
+  analysis:
+    # schedule interval (default 60s)
+    interval: 60s
+    # max number of failed metric checks before rollback
+    threshold: 5
+    # max traffic percentage routed to canary
+    # percentage (0-100)
+    maxWeight: 50
+    # canary increment step
+    # percentage (0-100)
+    stepWeight: 10
+    metrics:
+    - name: success-rate
+      templateRef:
+        name: success-rate
+        namespace: prod
+      thresholdRange:
+        min: 0.9
+      interval: 1m
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: ClusterPodMonitoring
+metadata:
+  name: app-metrics
+spec:
+  selector:
+    matchLabels:
+      app: app
+  endpoints:
+  - port: 8080
+    interval: 10s
