@@ -1,15 +1,17 @@
 # Canary Deployments with Cloud Deploy, Flagger and Gateway API
+```
 export GCP_PROJECT_ID=<your_project_on_gcp>
 export GCP_REGION=<your_gcp_region>
-
+```
 Create Proxy-only subnet
+```
 gcloud compute networks subnets create proxy \
     --purpose=REGIONAL_MANAGED_PROXY \
     --role=ACTIVE \
     --region=$GCP_REGION \
     --network=default \
     --range=10.103.0.0/23
-
+```
 # GKE Cluster
 Cluster with HPA and Workload Identity preinstalled
 ```
