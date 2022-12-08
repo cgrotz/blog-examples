@@ -100,7 +100,7 @@ spec:
     targetPort: 8080
     # Gateway API HTTPRoute host names
     hosts:
-     - app.prod.grotz.dev
+     - app.prod.example.com
     # Reference to the Gateway that the generated HTTPRoute would attach to.
     gatewayRefs:
       - name: app
