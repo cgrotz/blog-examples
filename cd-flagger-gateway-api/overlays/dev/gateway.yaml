@@ -21,7 +21,7 @@ metadata:
     gateway: app
 spec:
   hostnames:
-  - "app.dev.<DNS_NAME>"
+  - "app.dev.example.com"
   parentRefs:
   - name: app
   rules:
