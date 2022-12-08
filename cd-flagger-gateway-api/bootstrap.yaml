@@ -89,7 +89,7 @@ spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: app-prod
+    name: app
   # the maximum time in seconds for the canary deployment
   # to make progress before it is rollback (default 600s)
   progressDeadlineSeconds: 60
