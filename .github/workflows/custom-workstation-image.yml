@@ -1,4 +1,4 @@
-name: Custom Workstation Image CI
+name: Custom Workstation Image Build
 
 on:
   push:
