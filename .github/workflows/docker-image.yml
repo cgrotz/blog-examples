@@ -26,7 +26,7 @@ jobs:
     - name: 'Use gcloud CLI'
       run: 'gcloud auth configure-docker --quiet'
     - name: Build the Docker image
-      working-directory: ./perf-container
+      working-directory: ${{ github.workspace }}/perf-container
       run: docker build . --tag gcr.io/serverless-container-images/perf:$GITHUB_SHA --tag gcr.io/serverless-container-images/perf:latest
     - name: Push the Docker image
       run: docker push -a gcr.io/serverless-container-images/perf
