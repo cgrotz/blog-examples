@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - './custom_workstation_image/*'
-      - '.github/workflows/custom-workstation-image.yml
+      - '.github/workflows/custom-workstation-image.yml'
     branches: [ "main" ]
 
 permissions:
