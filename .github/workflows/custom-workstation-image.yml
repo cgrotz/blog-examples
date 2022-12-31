@@ -30,3 +30,4 @@ jobs:
       run: docker build . --tag gcr.io/serverless-container-images/workstation:$GITHUB_SHA --tag gcr.io/serverless-container-images/workstation:latest
     - name: Push the Docker image
       run: docker push -a gcr.io/serverless-container-images/workstation
+      
