@@ -14,11 +14,11 @@
 
 FROM us-central1-docker.pkg.dev/cloud-workstations-images/predefined/code-oss:latest
 
-ADD https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 /usr/bin/bazel
-ADD https://github.com/bazelbuild/buildtools/releases/latest/download/buildifier-linux-amd64 /usr/bin/buildifier
-ADD https://github.com/bazelbuild/buildtools/releases/latest/download/buildozer-linux-amd64 /usr/bin/buildozer
-ADD https://github.com/bazelbuild/buildtools/releases/latest/download/unused_deps-linux-amd64 /usr/bin/unused_deps
+RUN wget -o /usr/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 && chmod a+x /usr/bin/bazel
+RUN wget -o /usr/bin/buildifier https://github.com/bazelbuild/buildtools/releases/latest/download/buildifier-linux-amd64 && chmod a+x /usr/bin/buildifier
+RUN wget -o /usr/bin/buildozer https://github.com/bazelbuild/buildtools/releases/latest/download/buildozer-linux-amd64 && chmod a+x /usr/bin/buildozer
+RUN wget -o /usr/bin/unused_deps https://github.com/bazelbuild/buildtools/releases/latest/download/unused_deps-linux-amd64 && chmod a+x /usr/bin/unused_deps
 
-RUN wget https://open-vsx.org/api/golang/Go/0.37.0/file/golang.go-0.37.0.vsix && unzip golang.go-0.37.0.vsix "extension/*" && mv extension /opt/code-oss/extensions/golang.go
+RUN wget https://open-vsx.org/api/golang/Go/0.37.0/file/golang.go-0.37.0.vsix && unzip golang.go-0.37.0.vsix "extension/*" && mv extension /opt/code-oss/extensions/golang.go && rm -Rf extension/
 
-RUN wget https://open-vsx.org/api/BazelBuild/vscode-bazel/0.7.0/file/BazelBuild.vscode-bazel-0.7.0.vsix && unzip BazelBuild.vscode-bazel-0.7.0.vsix "extension/*" && mv extension /opt/code-oss/extensions/BazelBuild.vscode-bazel
+RUN wget https://open-vsx.org/api/BazelBuild/vscode-bazel/0.7.0/file/BazelBuild.vscode-bazel-0.7.0.vsix && unzip BazelBuild.vscode-bazel-0.7.0.vsix "extension/*" && mv extension /opt/code-oss/extensions/BazelBuild.vscode-bazel && rm -Rf extension/
