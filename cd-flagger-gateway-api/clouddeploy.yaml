@@ -30,7 +30,7 @@ metadata:
  name: dev
 description: development cluster
 gke:
- cluster: projects/GCP_PROJECT_ID/locations/GCP_REGION/clusters/example-cluster
+ cluster: projects/GOOGLE_CLOUD_PROJECT_ID/locations/GOOGLE_CLOUD_REGION/clusters/example-cluster
 ---
 apiVersion: deploy.cloud.google.com/v1
 kind: Target
@@ -38,4 +38,4 @@ metadata:
  name: prod
 description: production cluster
 gke:
- cluster: projects/GCP_PROJECT_ID/locations/GCP_REGION/clusters/example-cluster
+ cluster: projects/GOOGLE_CLOUD_PROJECT_ID/locations/GOOGLE_CLOUD_REGION/clusters/example-cluster
