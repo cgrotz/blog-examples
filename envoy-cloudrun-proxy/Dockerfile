@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 FROM envoyproxy/envoy-dev:latest
-ADD envoy.yaml etc/envoy/envoy.yaml
+ADD envoy.yaml /etc/envoy/envoy.yaml
 
