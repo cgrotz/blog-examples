@@ -13,4 +13,5 @@
 # limitations under the License.
 FROM envoyproxy/envoy-dev:latest
 ADD envoy.yaml /etc/envoy/envoy.yaml
+RUN chmod go+r /etc/envoy/envoy.yaml
 
