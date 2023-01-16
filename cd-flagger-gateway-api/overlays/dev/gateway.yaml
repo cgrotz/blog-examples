@@ -26,7 +26,7 @@ spec:
   - name: app
   rules:
   - backendRefs:
-    - name: app
+    - name: app-dev
       port: 8080
     matches:
     - path:
