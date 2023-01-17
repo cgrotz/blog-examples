@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- alice-deployment.yaml
+- alice-service.yaml
+- bob-deployment.yaml
+- bob-service.yaml
