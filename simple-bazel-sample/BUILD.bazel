@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "project_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/example/project",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "project",
+    embed = [":project_lib"],
+    goarch = "arm64",
+    goos = "darwin",
+    visibility = ["//visibility:public"],
+)
