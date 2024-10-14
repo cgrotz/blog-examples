@@ -1,0 +1,5 @@
+custom-bazel-rule/bazel-bin
+custom-bazel-rule/bazel-custom-bazel-rule
+custom-bazel-rule/bazel-out
+custom-bazel-rule/bazel-testlogs
+custom-bazel-rule/MODULE.bazel.lock

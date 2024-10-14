@@ -1,0 +1,2 @@
+# Workspace
+workspace(name = "custom-bazel-rule")
