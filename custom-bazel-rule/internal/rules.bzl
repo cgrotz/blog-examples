@@ -12,19 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def _my_rule_impl(ctx):
-    output = ctx.actions.declare_file("{name}_/main.a".format(name = ctx.label.name))
-    
+
+def _encourage_impl(ctx):
     args = ctx.actions.args()
-    args.add("-o", output)
-    args.add_all(ctx.files.srcs)
+
+    outputs = []
+    for src in ctx.files.srcs:
+        file_name_parts = src.basename.rsplit(".", 1)
+        file_name_without_ext = file_name_parts[0]
+        output_file = ctx.actions.declare_file("{name}_encouraged.{extension}".format(name = file_name_without_ext, extension = src.extension))
+        outputs.append(output_file)
+        args.add("{src_path}:{out_path}".format(src_path=src.path ,out_path=output_file.path))
 
     inputs = depset(
         direct = ctx.files.srcs,
     )
 
     ctx.actions.run(
-        outputs = [output],
+        outputs = outputs,
         inputs = inputs,
         executable = ctx.executable._encourager,
         arguments = [args],
@@ -32,11 +37,11 @@ def _my_rule_impl(ctx):
     )
 
     return [DefaultInfo(
-        files = depset([output]),
+        files = depset(outputs),
     )]
 
-my_rule = rule(
-    implementation = _my_rule_impl,
+encourage = rule(
+    implementation = _encourage_impl,
     attrs = {
         "srcs": attr.label_list(
             allow_files = [".go"],

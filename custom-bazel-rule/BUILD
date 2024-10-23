@@ -14,7 +14,7 @@
 
 load("@gazelle//:def.bzl", "gazelle")
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
-load("//internal:rules.bzl", "my_rule")
+load("//internal:rules.bzl", "encourage")
 
 
 # gazelle:prefix github.com/cgrotz/blog-examples/custom-bazel-rule
@@ -22,7 +22,7 @@ gazelle(name = "custom-bazel-rule")
 
 go_library(
     name = "example-lib",
-    srcs = ["main.go"],
+    srcs = [":encouraged"],
     importpath = "github.com/cgrotz/blog-examples/custom-bazel-rule",
     visibility = ["//visibility:private"],
 )
@@ -33,7 +33,7 @@ go_binary(
     visibility = ["//visibility:public"],
 )
 
-my_rule(
+encourage(
     name = "encouraged",
     srcs = ["main.go"],
 )
