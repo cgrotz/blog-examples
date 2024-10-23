@@ -15,22 +15,24 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
-	var outPath = flag.String("o", "", "path to archive file the ecourager should encourage")
-	flag.Parse()
-	srcPaths := flag.Args()
-	for _, srcPath := range srcPaths {
-		//_, filename := path.Split(srcPath)
-		//nameWithoutExtension := strings.TrimSuffix(filename, path.Ext(filename))
-		//encourage(srcPath, fmt.Sprintf("%s%s", path.Join(*outPath, nameWithoutExtension), ".a"))
-		encourage(srcPath, *outPath)
+	for _, arg := range os.Args {
+		if strings.Contains(arg, ":") {
+			srcPath, outPath := split_arg(arg)
+			encourage(srcPath, outPath)
+		}
 	}
+}
+
+func split_arg(arg string) (string, string) {
+	slice := strings.Split(arg, ":")
+	return slice[0], slice[1]
 }
 
 func encourage(sourceFile string, destinationFile string) {
@@ -57,11 +59,9 @@ func encourage(sourceFile string, destinationFile string) {
 	}
 
 	// Append "Hello World" to the destination file
-	_, err = outputFile.WriteString("Hello World")
+	_, err = outputFile.WriteString("// Wohoo! Amazing Code.")
 	if err != nil {
 		fmt.Println("Error writing to output file:", err)
 		return
 	}
-
-	fmt.Println("File copied and appended successfully!")
 }
