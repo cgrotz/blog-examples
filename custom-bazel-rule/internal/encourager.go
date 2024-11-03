@@ -19,7 +19,7 @@ func main() {
 }
 
 // splitArg splits a given string with a : into the part before and after the
-// color.
+// colon.
 func splitArg(arg string) (string, string) {
 	slice := strings.Split(arg, ":")
 	return slice[0], slice[1]
