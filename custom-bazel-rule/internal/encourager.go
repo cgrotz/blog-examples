@@ -1,24 +1,32 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
+// We exepect that the arguments given to the encourager are tuples of
+// input_path:output_path.
 func main() {
-	var outPath = flag.String("o", "", "path to archive file the ecourager should encourage")
-	flag.Parse()
-	srcPaths := flag.Args()
-	for _, srcPath := range srcPaths {
-		//_, filename := path.Split(srcPath)
-		//nameWithoutExtension := strings.TrimSuffix(filename, path.Ext(filename))
-		//encourage(srcPath, fmt.Sprintf("%s%s", path.Join(*outPath, nameWithoutExtension), ".a"))
-		encourage(srcPath, *outPath)
+	for _, arg := range os.Args {
+		if strings.Contains(arg, ":") {
+			srcPath, outPath := splitArg(arg)
+			encourage(srcPath, outPath)
+		}
 	}
 }
 
+// splitArg splits a given string with a : into the part before and after the
+// color.
+func splitArg(arg string) (string, string) {
+	slice := strings.Split(arg, ":")
+	return slice[0], slice[1]
+}
+
+// Load the sourceFile, add a encouraging message to the end, and
+// save the updated file under destinationFile.
 func encourage(sourceFile string, destinationFile string) {
 	inputFile, err := os.Open(sourceFile)
 	if err != nil {

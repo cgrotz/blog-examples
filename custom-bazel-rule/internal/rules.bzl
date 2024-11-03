@@ -1,4 +1,4 @@
-def _my_rule_impl(ctx):
+def _encourager_rule_impl(ctx):
     output = ctx.actions.declare_file("{name}_/main.a".format(name = ctx.label.name))
     
     args = ctx.actions.args()
@@ -21,8 +21,8 @@ def _my_rule_impl(ctx):
         files = depset([output]),
     )]
 
-my_rule = rule(
-    implementation = _my_rule_impl,
+encourager_rule = rule(
+    implementation = _encourager_rule_impl,
     attrs = {
         "srcs": attr.label_list(
             allow_files = [".go"],
