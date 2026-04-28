@@ -42,7 +42,7 @@ var processingTime = flag.Int("processingTime", 0, "Time in Milliseconds before 
 var startupDelay = flag.Int("startupDelay", 0, "Delay in Milliseconds before the container starts up")
 var reverseProxyDestination = flag.String("remote", "", "Backend for the reverse proxy")
 var runAsReverseProxy = flag.Bool("proxy", false, "Should the app run in reverse proxy mode")
-var port = flag.Int("port", 8080, "Server port for the app")
+var port = flag.Int("port", 8080, "Server port for the application")
 var tracing = flag.Bool("tracing", true, "Tracing enabled; defaults to true")
 var explicitError = flag.Bool("error", false, "Explicitly throw an error before starting the HTTP server; defaults to false")
 var project string
